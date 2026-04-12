@@ -145,6 +145,15 @@ def is_url(path_or_url: str) -> bool:
     return path_or_url.startswith("http://") or path_or_url.startswith("https://")
 
 
+def normalize_url(url: str) -> str:
+    """将 http:// 转换为 https://（优先使用 HTTPS）"""
+    if url.startswith("http://"):
+        # 对于 Bilibili 等主流平台，转换为 https
+        if "bilibili.com" in url or "youtube.com" in url:
+            return url.replace("http://", "https://", 1)
+    return url
+
+
 class CmdResult(NamedTuple):
     """命令执行结果"""
     returncode: int
@@ -551,7 +560,7 @@ def generate_summary():
     client = anthropic.Anthropic()
     response = client.messages.create(
         model="claude-haiku-4-20250514",
-        max_tokens=1024,
+        max_tokens=8192,
         messages=[{"role": "user", "content": prompt}]
     )
 
@@ -635,6 +644,8 @@ def main():
 
     try:
         if is_url(video_input):
+            # 规范化 URL（http -> https）
+            video_input = normalize_url(video_input)
             print(f"[INFO] 检测到在线视频: {video_input}")
 
             # 获取视频信息
